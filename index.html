@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dumb Charades</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    #movie {
+      font-size: 5rem;
+      text-align: center;
+      padding: 40px;
+      max-width: 95%;
+      line-height: 1.2;
+    }
+
+    #controls {
+      margin-top: 40px;
+      display: flex;
+      gap: 20px;
+    }
+
+    button {
+      font-size: 1.3rem;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #next {
+      background: #ffcc00;
+      color: #000;
+    }
+
+    #fullscreen {
+      background: #444;
+      color: #fff;
+    }
+
+    .actor-mode #controls {
+      display: none;
+    }
+
+    .actor-mode #movie {
+      font-size: 7rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="movie">🎭 Tap “Next Movie”</div>
+
+  <div id="controls">
+    <button id="next">Next Movie</button>
+    <button id="fullscreen">Fullscreen Mode</button>
+  </div>
+
+  <script>
+    // Raw list (may contain duplicates during editing)
+const rawMovies = [
+  // =====================
+  // Late 90s (1995–1999)
+  // =====================
+  "Dilwale Dulhania Le Jayenge",
+  "Kuch Kuch Hota Hai",
+  "Hum Aapke Hain Koun",
+  "Hum Saath Saath Hain",
+  "Dil To Pagal Hai",
+  "Border",
+  "Gupt",
+  "Yes Boss",
+  "Pardes",
+  "Hero No. 1",
+  "Biwi No. 1",
+  "Judwaa",
+  "Karan Arjun",
+  "Raja Hindustani",
+  "Jeet",
+  "Soldier",
+  "Coolie No. 1",
+  "Saajan",
+  "Baazigar",
+  "Darr",
+  "Hum Dil De Chuke Sanam",
+  "Judaai",
+  "Taal",
+  "Bade Miyan Chote Miyan",
+
+  // =====================
+  // Early 2000s (2000–2005)
+  // =====================
+  "Kabhi Khushi Kabhie Gham",
+  "Kal Ho Naa Ho",
+  "Dil Chahta Hai",
+  "Lagaan",
+  "Gadar Ek Prem Katha",
+  "Mohabbatein",
+  "Main Hoon Na",
+  "Veer Zaara",
+  "Devdas",
+  "Kaho Naa Pyaar Hai",
+  "Chak De India",
+  "Swades",
+  "Company",
+  "Aankhen",
+  "Raaz",
+  "Hera Pheri",
+  "Phir Hera Pheri",
+  "Awara Paagal Deewana",
+  "Mujhse Shaadi Karogi",
+  "No Entry",
+  "Bunty Aur Babli",
+  "Masti",
+  "Salaam Namaste",
+  "Kal Ho Naa Ho",
+  "Koi Mil Gaya",
+  "Andaaz",
+  "Baghban",
+
+  // =====================
+  // Comedy Gold (2000s)
+  // =====================
+  "Andaz Apna Apna",
+  "Hungama",
+  "Welcome",
+  "Golmaal",
+  "Golmaal Returns",
+  "Bhagam Bhag",
+  "Dhamaal",
+  "Partner",
+  "De Dana Dan",
+  "Housefull",
+  "Housefull 2",
+  "Munna Bhai M.B.B.S.",
+  "Lage Raho Munna Bhai",
+  "Chup Chup Ke",
+  "Malamaal Weekly",
+  "Dhamaal",
+  "All The Best",
+  "Money Hai Toh Honey Hai",
+  "No Problem",
+
+  // =====================
+  // Romance / Feel-Good
+  // =====================
+  "Jab We Met",
+  "Rehnaa Hai Terre Dil Mein",
+  "Saathiya",
+  "Hum Tum",
+  "Yeh Jawaani Hai Deewani",
+  "Barfi",
+  "Rockstar",
+  "Ae Dil Hai Mushkil",
+  "Kabir Singh",
+  "Tamasha",
+  "Wake Up Sid",
+  "Ek Ladki Ko Dekha Toh Aisa Laga",
+  "Humko Deewana Kar Gaye",
+  "Student Of The Year",
+  "Student Of The Year 2",
+  "Dil Dhadakne Do",
+
+  // =====================
+  // Action / Mass / Thriller
+  // =====================
+  "Dhoom",
+  "Dhoom 2",
+  "Dhoom 3",
+  "Don",
+  "Don 2",
+  "Race",
+  "Race 2",
+  "Krrish",
+  "Koi Mil Gaya",
+  "Singham",
+  "Singham Returns",
+  "Dabangg",
+  "Dabangg 2",
+  "Wanted",
+  "Rowdy Rathore",
+  "Ek Tha Tiger",
+  "Tiger Zinda Hai",
+  "Kick",
+  "War",
+  "Bajrangi Bhaijaan",
+  "Ra.One",
+  "Raees",
+  "Baaghi",
+  "Baaghi 2",
+  "Baaghi 3",
+  "Shivaay",
+
+  // =====================
+  // 2010s Crowd-Pleasers
+  // =====================
+  "Om Shanti Om",
+  "Chennai Express",
+  "3 Idiots",
+  "PK",
+  "Queen",
+  "Tanu Weds Manu",
+  "Tanu Weds Manu Returns",
+  "Zindagi Na Milegi Dobara",
+  "Golmaal Again",
+  "Bhool Bhulaiyaa",
+  "Bhool Bhulaiyaa 2",
+  "Happy New Year",
+  "Kick",
+  "Raazi",
+  "Andhadhun",
+  "Stree",
+  "Dream Girl",
+  "Badhaai Ho",
+  "Shubh Mangal Saavdhan",
+  "Shubh Mangal Zyada Saavdhan",
+  "Luka Chuppi",
+  "Sonu Ke Titu Ki Sweety",
+  "De De Pyaar De",
+
+  // =====================
+  // Late 2010s – 2020s (Acting-friendly)
+  // =====================
+  "Sooryavanshi",
+  "Gully Boy",
+  "Pathaan",
+  "War",
+  "RRR",
+  "Brahmastra",
+  "JugJugg Jeeyo",
+  "Rocky Aur Rani Ki Prem Kahani",
+  "Chhichhore",
+  "Good Newwz",
+  "Liger",
+  "Selfiee",
+  "Tiger 3",
+  "Doctor G",
+  "Badhaai Do",
+  "Mrs. Chatterjee vs Norway"
+];
+
+
+    // ✅ Remove duplicates once, safely
+    const movies = [...new Set(rawMovies)];
+
+    let bag = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function refillBag() {
+      bag = shuffle([...movies]);
+    }
+
+    function nextMovie() {
+      if (bag.length === 0) {
+        refillBag(); // reshuffle only after all movies used
+      }
+      const movie = bag.pop();
+      document.getElementById("movie").textContent = movie;
+    }
+
+    document.getElementById("next").addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent actor-mode double trigger
+      nextMovie();
+    });
+
+    document.getElementById("fullscreen").addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent body click firing
+      document.body.classList.add("actor-mode");
+
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      }
+
+      nextMovie();
+    });
+
+    // Actor mode: tap anywhere = next movie
+    document.body.addEventListener("click", () => {
+      if (document.body.classList.contains("actor-mode")) {
+        nextMovie();
+      }
+    });
+  </script>
+
+</body>
+</html>
