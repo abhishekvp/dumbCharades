@@ -44,18 +44,22 @@
       cursor: pointer;
     }
 
-    #movie {
-      font-size: 3.5rem;
-      font-weight: 800;
-      line-height: 1.1;
-      transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      color: #fff;
-      text-shadow: 0 0 20px rgba(255,255,255,0.2);
-    }
+#movie {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  /* Remove the transition from here so it doesn't apply to everything */
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255,255,255,0.2);
+  /* This ensures the 'unblurring' is smooth */
+  transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    .hidden {
-      filter: blur(35px);
-    }
+.hidden {
+  filter: blur(35px);
+  /* This makes the 'blurring' instant when the class is added */
+  transition: none !important;
+}
 
     #instruction {
       margin-top: 20px;
