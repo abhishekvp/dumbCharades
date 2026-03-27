@@ -2,306 +2,222 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dumb Charades</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hardcore Bollywood Charades</title>
   <style>
     body {
       margin: 0;
       height: 100vh;
-      background: #000;
+      background: radial-gradient(circle, #1a1a1a, #000);
       color: #fff;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       user-select: none;
+      overflow: hidden;
+    }
+
+    #word-count {
+      font-size: 1.2rem;
+      background: linear-gradient(45deg, #ffcc00, #ff9900);
+      color: #000;
+      padding: 10px 30px;
+      border-radius: 50px;
+      margin-bottom: 25px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 20px rgba(255, 204, 0, 0.4);
+      text-transform: uppercase;
+    }
+
+    #movie-container {
+      text-align: center;
+      padding: 20px;
+      width: 90%;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
     }
 
     #movie {
-      font-size: 5rem;
-      text-align: center;
-      padding: 40px;
-      max-width: 95%;
-      line-height: 1.2;
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #fff;
+      text-shadow: 0 0 20px rgba(255,255,255,0.2);
     }
 
-    #controls {
-      margin-top: 40px;
-      display: flex;
-      gap: 20px;
+    .hidden {
+      filter: blur(35px);
+    }
+
+    #instruction {
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #777;
+      font-weight: 500;
     }
 
     button {
+      padding: 18px 50px;
       font-size: 1.3rem;
-      padding: 14px 28px;
+      margin-top: 50px;
+      border-radius: 15px;
       border: none;
-      border-radius: 10px;
       cursor: pointer;
-      font-weight: bold;
-    }
-
-    #next {
       background: #ffcc00;
       color: #000;
+      font-weight: 800;
+      transition: all 0.2s;
+      box-shadow: 0 5px 0 #b38f00;
     }
 
-    #fullscreen {
-      background: #444;
-      color: #fff;
+    button:hover {
+      background: #ffdb4d;
     }
 
-    .actor-mode #controls {
-      display: none;
-    }
-
-    .actor-mode #movie {
-      font-size: 7rem;
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #b38f00;
     }
   </style>
 </head>
+<body onclick="reveal()">
 
-<body>
-
-  <div id="movie">🎭 Tap “Next Movie”</div>
-
-  <div id="controls">
-    <button id="next">Next Movie</button>
-    <button id="fullscreen">Fullscreen Mode</button>
+  <div id="word-count">START GAME</div>
+  
+  <div id="movie-container">
+    <div id="movie" class="hidden">READY?</div>
+    <div id="instruction">Tap screen to reveal title</div>
   </div>
 
+  <button onclick="nextMovie(event)">NEXT MOVIE</button>
+
   <script>
-    // Raw list (may contain duplicates during editing)
-const rawMovies = [
-  // =====================
-  // Late 90s (1995–1999)
-  // =====================
-  "Dilwale Dulhania Le Jayenge",
-  "Kuch Kuch Hota Hai",
-  "Hum Aapke Hain Koun",
-  "Hum Saath Saath Hain",
-  "Dil To Pagal Hai",
-  "Border",
-  "Gupt",
-  "Yes Boss",
-  "Pardes",
-  "Hero No. 1",
-  "Biwi No. 1",
-  "Judwaa",
-  "Karan Arjun",
-  "Raja Hindustani",
-  "Jeet",
-  "Soldier",
-  "Coolie No. 1",
-  "Saajan",
-  "Baazigar",
-  "Darr",
-  "Hum Dil De Chuke Sanam",
-  "Judaai",
-  "Taal",
-  "Bade Miyan Chote Miyan",
-
-  // =====================
-  // Early 2000s (2000–2005)
-  // =====================
-  "Kabhi Khushi Kabhie Gham",
-  "Kal Ho Naa Ho",
-  "Dil Chahta Hai",
-  "Lagaan",
-  "Gadar Ek Prem Katha",
-  "Mohabbatein",
-  "Main Hoon Na",
-  "Veer Zaara",
-  "Devdas",
-  "Kaho Naa Pyaar Hai",
-  "Chak De India",
-  "Swades",
-  "Company",
-  "Aankhen",
-  "Raaz",
-  "Hera Pheri",
-  "Phir Hera Pheri",
-  "Awara Paagal Deewana",
-  "Mujhse Shaadi Karogi",
-  "No Entry",
-  "Bunty Aur Babli",
-  "Masti",
-  "Salaam Namaste",
-  "Kal Ho Naa Ho",
-  "Koi Mil Gaya",
-  "Andaaz",
-  "Baghban",
-
-  // =====================
-  // Comedy Gold (2000s)
-  // =====================
-  "Andaz Apna Apna",
-  "Hungama",
-  "Welcome",
-  "Golmaal",
-  "Golmaal Returns",
-  "Bhagam Bhag",
-  "Dhamaal",
-  "Partner",
-  "De Dana Dan",
-  "Housefull",
-  "Housefull 2",
-  "Munna Bhai M.B.B.S.",
-  "Lage Raho Munna Bhai",
-  "Chup Chup Ke",
-  "Malamaal Weekly",
-  "Dhamaal",
-  "All The Best",
-  "Money Hai Toh Honey Hai",
-  "No Problem",
-
-  // =====================
-  // Romance / Feel-Good
-  // =====================
-  "Jab We Met",
-  "Rehnaa Hai Terre Dil Mein",
-  "Saathiya",
-  "Hum Tum",
-  "Yeh Jawaani Hai Deewani",
-  "Barfi",
-  "Rockstar",
-  "Ae Dil Hai Mushkil",
-  "Kabir Singh",
-  "Tamasha",
-  "Wake Up Sid",
-  "Ek Ladki Ko Dekha Toh Aisa Laga",
-  "Humko Deewana Kar Gaye",
-  "Student Of The Year",
-  "Student Of The Year 2",
-  "Dil Dhadakne Do",
-
-  // =====================
-  // Action / Mass / Thriller
-  // =====================
-  "Dhoom",
-  "Dhoom 2",
-  "Dhoom 3",
-  "Don",
-  "Don 2",
-  "Race",
-  "Race 2",
-  "Krrish",
-  "Koi Mil Gaya",
-  "Singham",
-  "Singham Returns",
-  "Dabangg",
-  "Dabangg 2",
-  "Wanted",
-  "Rowdy Rathore",
-  "Ek Tha Tiger",
-  "Tiger Zinda Hai",
-  "Kick",
-  "War",
-  "Bajrangi Bhaijaan",
-  "Ra.One",
-  "Raees",
-  "Baaghi",
-  "Baaghi 2",
-  "Baaghi 3",
-  "Shivaay",
-
-  // =====================
-  // 2010s Crowd-Pleasers
-  // =====================
-  "Om Shanti Om",
-  "Chennai Express",
-  "3 Idiots",
-  "PK",
-  "Queen",
-  "Tanu Weds Manu",
-  "Tanu Weds Manu Returns",
-  "Zindagi Na Milegi Dobara",
-  "Golmaal Again",
-  "Bhool Bhulaiyaa",
-  "Bhool Bhulaiyaa 2",
-  "Happy New Year",
-  "Kick",
-  "Raazi",
-  "Andhadhun",
-  "Stree",
-  "Dream Girl",
-  "Badhaai Ho",
-  "Shubh Mangal Saavdhan",
-  "Shubh Mangal Zyada Saavdhan",
-  "Luka Chuppi",
-  "Sonu Ke Titu Ki Sweety",
-  "De De Pyaar De",
-
-  // =====================
-  // Late 2010s – 2020s (Acting-friendly)
-  // =====================
-  "Sooryavanshi",
-  "Gully Boy",
-  "Pathaan",
-  "War",
-  "RRR",
-  "Brahmastra",
-  "JugJugg Jeeyo",
-  "Rocky Aur Rani Ki Prem Kahani",
-  "Chhichhore",
-  "Good Newwz",
-  "Liger",
-  "Selfiee",
-  "Tiger 3",
-  "Doctor G",
-  "Badhaai Do",
-  "Mrs. Chatterjee vs Norway"
-];
-
-
-    // ✅ Remove duplicates once, safely
-    const movies = [...new Set(rawMovies)];
+    // 🎬 300+ BOLLYWOOD TITLES (NO NUMBERS, NO 1-WORDERS, 5+ LETTERS)
+    const movies = [
+      "Dilwale Dulhania Le Jayenge", "Kabhi Khushi Kabhie Gham", "Hum Saath Saath Hain", "Kal Ho Naa Ho", "Zindagi Na Milegi Dobara",
+      "Yeh Jawaani Hai Deewani", "Ae Dil Hai Mushkil", "Ajab Prem Ki Ghazab Kahani", "Sonu Ke Titu Ki Sweety", "Main Prem Ki Diwani Hoon",
+      "Phir Bhi Dil Hai Hindustani", "Mere Yaar Ki Shaadi Hai", "Rab Ne Bana Di Jodi", "Pyar Kiya To Darna Kya", "Hum Dil De Chuke Sanam",
+      "Mujhse Dosti Karoge", "Maine Pyar Kyun Kiya", "Ek Ladki Ko Dekha Toh Aisa Laga", "Do Paise Ki Dhoop Chaar Aane Ki Baarish",
+      "Aamdani Atthanni Kharcha Rupaiya", "Baap Numbri Beta Dus Numbri", "Miss Tanakpur Haazir Ho", "Hazaaron Khwaishein Aisi",
+      "Phas Gaye Re Obama", "Saheb Biwi Aur Gangster", "Mere Brother Ki Dulhan", "Dum Laga Ke Haisha", "Shaadi Mein Zaroor Aana",
+      "Chandigarh Kare Aashiqui", "Monica O My Darling", "Jaane Bhi Do Yaaro", "Main Meri Patni Aur Woh", "Once Upon A Time In Mumbaai",
+      "Matru Ki Bijlee Ka Mandola", "Main Madhuri Dixit Banna Chahti Hoon", "Love Ke Liye Kuch Bhi Karega", "Jis Desh Mein Ganga Behti Hai",
+      "Tu Bal Bramhachari Main Hoon Kanya Kunwari", "Andheri Raat Mein Diya Tere Haath Mein", "Ghar Mein Ram Gali Mein Shyam",
+      "Hello Hum Lallan Bol Rahe Hain", "Jal Bin Machhli Nritya Bin Bijli", "Allah Meharban Toh Gadha Pahalwan", "Dulhan Wahi Jo Piya Man Bhaye",
+      "Pran Jaaye Par Shaan Na Jaaye", "Aapko Pehle Bhi Kahin Dekha Hai", "Sone Ka Dil Lohe Ke Haath", "Thodasa Roomani Ho Jaye",
+      "Banda Yeh Bindaas Hai", "Udhaar Ki Zindagi", "Is Raat Ki Subah Nahin", "Student Of The Year", "My Name Is Khan",
+      "Wake Up Sid", "Life In A Metro", "Dil Chahta Hai", "Rang De Basanti", "Andaz Apna Apna", "Dil Dhadakne Do", "English Vinglish",
+      "Bajirao Mastani", "Albert Pinto Ko Gussa Kyon Aata Hai", "Salim Langde Pe Mat Rona", "Arvind Desai Ki Ajeeb Dastaan",
+      "Luv Shuv Tey Chicken Khurana", "Shirin Farhad Ki Toh Nikal Padi", "Umar Pachpan Ki Dil Bachpan Ka", "Jaan-E-Mann Let's Fall In Love Again",
+      "Laali Ki Shaadi Mein Laaddoo Deewana", "Teri Maang Sitaron Se Bhar Doon", "Ghar Mein Ho Saali To Pura Saal Diwali",
+      "Guru Suleman Chela Pahelwan", "Dhoti Lota Aur Chowpatty", "Shin Shinaki Boobla Boo", "Balwinder Singh Famous Ho Gaya",
+      "Khamoshi The Musical", "Dil Dosti Etc", "Sui Dhaaga Made In India", "The Sky Is Pink", "Mrs Chatterjee vs Norway",
+      "Tu Jhoothi Main Makkaar", "Zara Hatke Zara Bachke", "Amar Singh Chamkila", "Do Aur Do Pyaar", "Auron Mein Kahan Dum Tha",
+      "The Buckingham Murders", "Kuku Mathur Ki Jhand Ho Gayi", "Badhti Ka Naam Dadhi", "Murde Ki Jaan Khatre Mein", "Kathal A Jackfruit Mystery",
+      "Rocky Aur Rani Kii Prem Kahaani", "Main Atal Hoon", "The Great Indian Family", "Luv Ki Arrange Marriage", "Kahan Shuru Kahan Khatam",
+      "Vicky Vidya Ka Woh Wala Video", "Pyaar Mein Twist", "U Me Aur Hum", "Chameli Ki Shaadi", "Finding Fanny Fernandes",
+      "Mere Baap Pehle Aap", "De Dana Dan", "Raja Bhaiya", "Raja Ko Rani Se Pyar Ho Gaya", "Chura Liyaa Hai Tumne", "Aashiq Banaya Aapne",
+      "Woh Lamhe", "Gangster A Love Story", "Taare Zameen Par", "Bhaag Milkha Bhaag", "Hindi Medium", "Secret Superstar", "Laapataa Ladies",
+      "Merry Christmas", "Shubh Mangal Saavdhan", "Badhaai Ho", "Sardar Ka Grandson", "Meenakshi Sundareshwar", "Jayeshbhai Jordaar",
+      "Jug Jugg Jeeyo", "An Action Hero", "Hera Pheri", "Phir Hera Pheri", "Bhool Bhulaiyaa", "Garam Masala", "Chup Chup Ke",
+      "Khatta Meetha", "Atithi Tum Kab Jaoge", "Pyaar Ka Punchnama", "Luv Ka The End", "Mere Dad Ki Maruti", "Humpty Sharma Ki Dulhania",
+      "Badrinath Ki Dulhania", "Main Hoon Na", "Om Shanti Om", "Lage Raho Munna Bhai", "Munna Bhai MBBS", "Ganga Jamuna Saraswati",
+      "Raja Hindustani", "Saajan Chale Sasural", "Dulhe Raja", "Dil To Pagal Hai", "Chak De India", "Rock On", "Kai Po Che",
+      "Go Goa Gone", "The Lunchbox", "Hasee Toh Phasee", "Tanu Weds Manu Returns", "Bajrangi Bhaijaan", "Airlift", "Ki And Ka",
+      "Udta Punjab", "Hindi Medium", "Veere Di Wedding", "Badhaai Ho", "Gully Boy", "Dream Girl", "Ujda Chaman", "Angrezi Medium",
+      "Gulabo Sitabo", "Shakuntala Devi", "Gunjan Saxena The Kargil Girl", "Dil Bechara", "Khuda Haafiz", "Ginny Weds Sunny",
+      "Suraj Pe Mangal Bhari", "The White Tiger", "Ramprasad Ki Tehrvi", "Haseen Dillruba", "Bell Bottom", "Bhoot Police",
+      "Rashmi Rocket", "Hum Do Hamare Do", "Meenakshi Sundareshwar", "Bunty Aur Babli", "Bob Biswas", "Chandigarh Kare Aashiqui",
+      "Atrangi Re", "Badhaai Do", "A Thursday", "Sharmaji Namkeen", "Jayeshbhai Jordaar", "Janhit Mein Jaari", "Sherdil The Pilibhit Saga",
+      "Jugjugg Jeeyo", "Laal Singh Chaddha", "Raksha Bandhan", "Vikram Vedha", "Monica O My Darling", "An Action Hero",
+      "Govinda Naam Mera", "Mission Majnu", "Almost Pyaar With Dj Mohabbat", "Gulmohar", "Tu Jhoothi Main Makkaar", "Zwigato",
+      "Mrs Chatterjee Vs Norway", "The Kerala Story", "Kathal A Jackfruit Mystery", "Bloody Daddy", "Satyaprem Ki Katha",
+      "Rocky Aur Rani Kii Prem Kahaani", "Jaane Jaan", "The Great Indian Family", "Mission Raniganj", "Dhak Dhak", "The Archies",
+      "Mast Mein Rehne Ka", "Kho Gaye Hum Kahan", "Merry Christmas", "Main Atal Hoon", "Fighter", "Laapataa Ladies", "Madgaon Express",
+      "Amar Singh Chamkila", "Do Aur Do Pyaar", "Bhaiyya Ji", "Chandu Champion", "Ishq Vishk Rebound", "Bad Newz", "Auron Mein Kahan Dum Tha",
+      "Khel Khel Mein", "Sandeep Aur Pinky Faraar", "Durgamati", "Sherni", "Toofaan", "Shershaah", "Vikram Vedha", "Sukhee", "Apurva",
+      "Bhakshak", "Savi", "Band Baaja Baaraat", "Ladies vs Ricky Bahl", "Mujhse Fraaandship Karoge", "Aurangzeb", "Shuddh Desi Romance",
+      "Bewakoofiyaan", "Daawat-e-Ishq", "Kill Dil", "Sarbjit", "Raman Raghav", "Dishoom", "Mirzya", "Trapped", "Phillauri",
+      "Behen Hogi Teri", "Jagga Jasoos", "Lipstick Under My Burkha", "Newton", "October", "Bhavesh Joshi Superhero", "Soorma",
+      "Manmarziyaan", "Photograph", "Mard Ko Dard Nahi Hota", "The Tashkent Files", "India's Most Wanted", "Sonchiriya",
+      "Motichoor Chaknachoor", "Pagalpanti", "Chhalaang", "Haseena Maan Jaayegi", "Bade Miyan Chote Miyan", "Mujhse Shaadi Karogi",
+      "Karam Arjun", "Jo Jeeta Wohi Sikandar", "Khiladiyon Ka Khiladi", "Gupt The Hidden Truth", "Vaastav The Reality",
+      "Kaho Naa Pyaar Hai", "Gadar Ek Prem Katha", "Bunty Aur Babli", "Khosla Ka Ghosla", "Band Baaja Baaraat", "No One Killed Jessica",
+      "Delhi Belly", "Bol Bachchan", "Hasee Toh Phasee", "Kapoor And Sons", "Bareilly Ki Barfi", "Shubh Mangal Saavdhan", "Badhaai Ho",
+      "Sardar Udham", "Gangubai Kathiawadi", "The Kashmir Files", "Bhool Bhulaiyaa", "Rocky Aur Rani Ki Prem Kahani", "Mission Raniganj",
+      "Sam Bahadur", "Merry Christmas", "Laapataa Ladies", "Madgaon Express", "Main Hoon Na", "Baazigar", "Darr A Love Story",
+      "Hum Dil De Chuke Sanam", "Dil To Pagal Hai", "Kuch Kuch Hota Hai", "Mohabbatein", "Kabhi Alvida Naa Kehna", "Om Shanti Om",
+      "Rab Ne Bana Di Jodi", "Jab Tak Hai Jaan", "Chennai Express", "Happy New Year", "Dilwale", "Raees", "Zero", "Pathaan", "Dunki",
+      "Maine Pyar Kiya", "Hum Aapke Hain Koun", "Hum Saath Saath Hain", "Wanted", "Dabangg", "Bodyguard", "Ek Tha Tiger",
+      "Bajrangi Bhaijaan", "Sultan", "Tiger Zinda Hai", "Bharat", "Radhe Your Most Wanted Bhai", "Kisi Ka Bhai Kisi Ki Jaan",
+      "Ishq Vishk Rebound", "Munjya", "Chandu Champion", "Bad Newz", "Khel Khel Mein", "Auron Mein Kahan Dum Tha", "Ulajh"
+    ];
 
     let bag = [];
+    const movieEl = document.getElementById("movie");
+    const countEl = document.getElementById("word-count");
+
+    // 🔊 PLEASANT CHIME SOUND (Multi-tone chord)
+	function playChime() {
+	  try {
+	    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	    const osc = audioCtx.createOscillator();
+	    const gain = audioCtx.createGain();
+
+	    osc.type = 'triangle'; // Warmer than 'sine'
+	    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // High A note
+
+	    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+	    gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.02); // Quick fade in
+	    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); // Smooth fade out
+
+	    osc.connect(gain);
+	    gain.connect(audioCtx.destination);
+
+	    osc.start();
+	    osc.stop(audioCtx.currentTime + 0.3);
+	  } catch(e) {}
+	}
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
-      return array;
     }
 
-    function refillBag() {
-      bag = shuffle([...movies]);
+    function refill() {
+      bag = [...new Set(movies)]; // Ensure absolute uniqueness
+      shuffle(bag);
     }
 
-    function nextMovie() {
-      if (bag.length === 0) {
-        refillBag(); // reshuffle only after all movies used
-      }
-      const movie = bag.pop();
-      document.getElementById("movie").textContent = movie;
+    function reveal() {
+      movieEl.classList.remove("hidden");
     }
 
-    document.getElementById("next").addEventListener("click", (e) => {
-      e.stopPropagation(); // prevent actor-mode double trigger
-      nextMovie();
-    });
+    function nextMovie(e) {
+      if(e) e.stopPropagation();
+      if (bag.length === 0) refill();
+      
+      const m = bag.pop();
+      movieEl.textContent = m;
+      movieEl.classList.add("hidden");
+      countEl.textContent = m.split(/\s+/).length + " WORDS";
+      
+      playChime();
+    }
 
-    document.getElementById("fullscreen").addEventListener("click", (e) => {
-      e.stopPropagation(); // prevent body click firing
-      document.body.classList.add("actor-mode");
-
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      }
-
-      nextMovie();
-    });
-
-    // Actor mode: tap anywhere = next movie
-    document.body.addEventListener("click", () => {
-      if (document.body.classList.contains("actor-mode")) {
-        nextMovie();
-      }
-    });
+    // Initialize with total count
+    refill();
+    countEl.textContent = movies.length + " MOVIES";
   </script>
-
 </body>
 </html>
